@@ -205,3 +205,49 @@ int main(int argc, char** argv){
     return 0;
 }
 ```
+
+It is good practice to break long macros into multiple lines but do not forget to use `\` (one backslash) to let the preprocessor know that the rest of the definition comes on the next line. Note that `\` doesn't get substituted with a _newline_ character. Instead, it is an indicator that the following line in the continuation of the same macro definition.
+
+## 1.2 Variadic macros
+
+A variadic macros is one that can accept variable number of input arguments. Sometimes the same variadic macro accepts 2 arguments, sometimes 4 arguments, and sometimes 7. Variadic macros are very handy when you are not sure about the number of arguments in different usages of the same macro. A simple example is given below:
+
+**using variadic macros**
+```c
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#define VERSION "2.3.4"
+#define LOG_ERR(format, ...)\
+    fprintf(stderr,format,__VA_ARGS__)
+int main(int argc, char** argv){
+    if(argc < 3){
+        LOG_ERR("Invalid number of args, for v%s\n!\n",VERSION);
+        exit(1);
+    }
+    if(strcmp(argv[1],"-n")!=0){
+        LOG_ERR("%s is a wrong param at index %d for v%s.\n",argv[1],1,VERSION);
+        exit(1);
+    }
+}
+
+```
+In the preceding example, you see a new identifier: `__VA_ARGS__`. It is an indicator to replace it with all the remaining input arguments that are not assigned to any paramater yet.
+
+In the preceding example, in the second usage of `LOG_ERR`, according to the macro definition, the arguments `argv[1]`, `1`, and `VERSION` are those input arguments that are not assigned to any parameter. So, they are going to be used in place of `__VAR_ARGS__` while expanding the macro.
+
+As a side note, the function `fprintf` writes to a _file descriptor_. In our case, `stderr`, which is the _error stream_ of the process. Also, note the ending semicolon after each `LOG_ERROR` usage. It is mandatory because the macro doesn't supply them as part of its definition and the programmer must add that semicolon to make the final preprocessed code syntactically correct.
+
+The following code is the final output after passing through the C preprocessor:
+```shell
+int main(int argc, char** argv){
+    if(argc < 3){
+        fprintf(__stderrp,"Invalid number of args, for v%s\n!\n","2.3.4");
+        exit(1);
+    }
+    if(strcmp(argv[1],"-n")!=0){
+        fprintf(__stderrp,"%s is a wrong param at index %d for v%s.\n",argv[1],1,"2.3.4");
+        exit(1);
+    }
+}
+```
